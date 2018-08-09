@@ -1,6 +1,8 @@
 [submodule "rooutil"]
 	path = rooutil
 	url = git@github.com:sgnoohc/rooutil.git
+	ignore = dirty
 [submodule "plottery"]
 	path = plottery
 	url = git@github.com:sgnoohc/plottery.git
+	ignore = dirty
