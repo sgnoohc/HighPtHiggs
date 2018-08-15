@@ -30,7 +30,8 @@ def main(argv):
         # Where the ntuples are located
         #"ntuple_path" : "/nfs-7/userdata/phchang/WWW_babies/HWW_v3.0.1/skim/",
         #"ntuple_path" : "/hadoop/cms/store/user/phchang/WWW_babies/HWW_v3.0.1/skim/",
-        "ntuple_path" : "/hadoop/cms/store/user/phchang/WWW_babies/HWW_v3.0.1/skim/",
+        #"ntuple_path" : "/nfs-7/userdata/phchang/babies/HWW2016_v1.1.0/link/",
+        "ntuple_path" : "/nfs-7/userdata/phchang/babies/HWW2016_v1.1.1/skim/",
 
         # Path to the config file that defines how the samples should be organized
         "sample_config_path" : "samples.cfg",
@@ -42,7 +43,7 @@ def main(argv):
         "exclude_priority_value" : "<1",
 
         # N-cores
-        "ncore" : 3,
+        "ncore" : 16,
 
         # TQCuts config file
         "cuts" : "cuts.cfg",
@@ -70,36 +71,36 @@ def main(argv):
     # Run the code
     qutils.loop(options)
 
-    # Retreive the result
-    samples = TQSampleFolder.loadSampleFolder("{}/output.root:samples".format(options["output_dir"]))
-
-    # Create plots and tables
-    bkg_path = [
-            ("W' [6 TeV]" , "/wprime/6000"  ) ,
-            ]
-    sig_path_plots = [
-            #("VH"         , "/vh"           ) ,
-            ]
-
-    sig_path_table = [
-            ]
-
-    histnames = [
-            ]
-    qutils.autoplot(samples, histnames, bkg_path=bkg_path, sig_path=sig_path_plots, clrs=[2002], options={"blind":["SR"]})
-    qutils.autoplot2d(samples, histnames, bkg_path=bkg_path, sig_path=sig_path_plots, clrs=[2002], options={})
-
-    # Make cutflow table
-    cutnames = [
-            "Root",
-            ]
-    qutils.autotable(samples, cutnames, bkg_path=bkg_path, sig_path=sig_path_table, options={"cuts": "cuts.cfg"})
-
-    # Make summary cutflow table
-    summary_cuts = [
-            "Root",
-            ]
-    qutils.table(samples, "Root", bkg_path=bkg_path, sig_path=sig_path_table, options={"cuts": "cuts.cfg", "cuts_list": summary_cuts, "output_name": "summary"})
+#    # Retreive the result
+#    samples = TQSampleFolder.loadSampleFolder("{}/output.root:samples".format(options["output_dir"]))
+#
+#    # Create plots and tables
+#    bkg_path = [
+#            ("W' [6 TeV]" , "/wprime/6000"  ) ,
+#            ]
+#    sig_path_plots = [
+#            #("VH"         , "/vh"           ) ,
+#            ]
+#
+#    sig_path_table = [
+#            ]
+#
+#    histnames = [
+#            ]
+#    qutils.autoplot(samples, histnames, bkg_path=bkg_path, sig_path=sig_path_plots, clrs=[2002], options={"blind":["SR"]})
+#    qutils.autoplot2d(samples, histnames, bkg_path=bkg_path, sig_path=sig_path_plots, clrs=[2002], options={})
+#
+#    # Make cutflow table
+#    cutnames = [
+#            "Root",
+#            ]
+#    qutils.autotable(samples, cutnames, bkg_path=bkg_path, sig_path=sig_path_table, options={"cuts": "cuts.cfg"})
+#
+#    # Make summary cutflow table
+#    summary_cuts = [
+#            "Root",
+#            ]
+#    qutils.table(samples, "Root", bkg_path=bkg_path, sig_path=sig_path_table, options={"cuts": "cuts.cfg", "cuts_list": summary_cuts, "output_name": "summary"})
 
 #_____________________________________________________________________________________________________
 def generate_cuts(lepsfvar_suffix="",trigsfvar_suffix="",jecvar_suffix="",btagsfvar_suffix="",genmet_prefix="",genmet_suffix=""): #define _up _dn etc.
