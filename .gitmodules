@@ -6,3 +6,12 @@
 	path = plottery
 	url = git@github.com:sgnoohc/plottery.git
 	ignore = dirty
+[submodule "skimmer/rooutil"]
+	path = skimmer/rooutil
+	url = git@github.com:sgnoohc/rooutil.git
+[submodule "looper/rooutil"]
+	path = looper/rooutil
+	url = git@github.com:sgnoohc/rooutil.git
+[submodule "looper/plottery"]
+	path = looper/plottery
+	url = git@github.com:aminnj/plottery.git
