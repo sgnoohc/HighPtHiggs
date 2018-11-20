@@ -31,14 +31,7 @@ def main():
             ]
 
     histnames = [
-            #"CutISR400ElPlusRecoClassAStrawMan__yield",
-            #"CutISR400ElPlusRecoClassBStrawMan__yield",
-            #"CutISR400ElMinusRecoClassAStrawMan__yield",
-            #"CutISR400ElMinusRecoClassBStrawMan__yield",
-            "CutISR450MuPlusRecoClassAStrawMan__yield",
-            "CutISR450MuPlusRecoClassBStrawMan__yield",
-            "CutISR450MuMinusRecoClassAStrawMan__yield",
-            "CutISR450MuMinusRecoClassBStrawMan__yield",
+            "CutISR300MuMinusRecoClassB__recowhad_mlep_puppi_mass",
             ]
 
     bkg_list_ttbar = glob.glob(output_dirpath+"/TT*.root")
@@ -53,12 +46,12 @@ def main():
 
     h_wjets.SetName("W")
     h_ttbar.SetName("t#bar{t}")
-    h_hww.SetName("HWW")
+    h_hww.SetName("HWW (x10)")
 
     colors = [ 2005, 2001, 2 ]
     alloptions= {
                 "ratio_range":[0.0,2.0],
-                "nbins": 30,
+                "nbins": 60,
                 "autobin": False,
                 "legend_scalex": 1.8,
                 "legend_scaley": 1.1,
@@ -66,10 +59,11 @@ def main():
                 "bkg_sort_method": "unsorted",
                 "no_ratio": True,
                 "print_yield": True,
+                "signal_scale": 500,
                 }
     p.plot_hist(
             sigs = [h_hww],
-            bgs  = [h_ttbar, h_wjets],
+            bgs  = [h_ttbar, h_wjets, h_hww.Clone("HWW (stacked)")],
             #data = h_data,
             data = None,
             colors = colors,

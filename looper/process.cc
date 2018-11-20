@@ -33,35 +33,33 @@ int main(int argc, char** argv)
     // Cutflow utility object that creates a tree structure of cuts
     RooUtil::Cutflow cutflow(ofile);
 
-    cutflow.addCut("CutWeight");
-    cutflow.addCutToLastActiveCut("CutBVeto");
-    cutflow.addCutToLastActiveCut("CutNLep");
-    cutflow.addCutToLastActiveCut("CutNAK8");
-    cutflow.getCut("CutNAK8");
-    cutflow.addCutToLastActiveCut("CutISR400");
-    cutflow.getCut("CutNAK8");
-    cutflow.addCutToLastActiveCut("CutISR400to450");
-    cutflow.getCut("CutNAK8");
-    cutflow.addCutToLastActiveCut("CutISR450");
+    cutflow.addCut("CutWeight"               , [&]() { return hww.CutGenHT() > 0; } , [&]() { return hww.wgt(); } );
+    cutflow.addCutToLastActiveCut("CutBVeto" , [&]() { return hww.nbmed()   == 0; } , UNITY                       );
+    cutflow.addCutToLastActiveCut("CutNLep"  , [&]() { return hww.CutNLep()  > 0; } , UNITY                       );
+    cutflow.addCutToLastActiveCut("CutNAK8"  , [&]() { return hww.nak8jets() > 0; } , UNITY                       );
 
     // Some nested loops to create various cut regions with shorter lines of code
-    std::vector<TString> ISRbins = {"400", "400to450", "450"};
+    std::vector<TString> ISRbins = {"300", "300to400", "400", "400to450", "450"};
     std::vector<TString> LeptonChannels = {"El", "Mu"};
     std::vector<TString> Charges = {"Plus", "Minus"};
+
     for (auto& ISRbin : ISRbins)
     {
+        float fISRbin = ISRbin.Atof();
+        cutflow.getCut("CutNAK8");
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin, [=]() { return hww.recoisrmegajet_pt() > fISRbin; }, UNITY);
         for (auto& lepton : LeptonChannels)
         {
             cutflow.getCut("CutISR"+ISRbin);
-            cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton);
+            cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton, [=]() { return lepton.EqualTo("El") ? hww.CutEl() : hww.CutMu(); }, UNITY);
             for (auto& charge : Charges)
             {
                 cutflow.getCut("CutISR"+ISRbin+lepton);
-                cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton+charge);
+                cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton+charge, [=]() { return charge.EqualTo("Plus") ? lepton.EqualTo("El") ? hww.CutElPlus() : hww.CutMuPlus() : lepton.EqualTo("El") ? hww.CutElMinus() : hww.CutMuMinus() ;}, UNITY );
                 cutflow.getCut("CutISR"+ISRbin+lepton+charge);
-                cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton+charge+"RecoClassA");
+                cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton+charge+"RecoClassA", [=]() { return (hww.wlepwhadptratiodiff()>0.); }, UNITY);
                 cutflow.getCut("CutISR"+ISRbin+lepton+charge);
-                cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton+charge+"RecoClassB");
+                cutflow.addCutToLastActiveCut("CutISR"+ISRbin+lepton+charge+"RecoClassB", [=]() { return (hww.wlepwhadptratiodiff()<0.); }, UNITY);
             }
         }
     }
@@ -70,35 +68,35 @@ int main(int argc, char** argv)
     {
         // CutMuMinusRecoClassA
         cutflow.getCut("CutISR"+ISRbin+"MuMinusRecoClassA");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawManCut1");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawManCut2");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawMan");
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawManCut1", [=]() { return (hww.lep_relIso03EA()>0.2)                                     ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawManCut2", [=]() { return (hww.lep_miniIsoEA()<0.02)                                     ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawMan"    , [=]() { return (hww.recowhad_puppi_mass()>60)*(hww.recowhad_puppi_mass()<105) ; }, UNITY);
 
         // CutMuPlusRecoClassA
         cutflow.getCut("CutISR"+ISRbin+"MuPlusRecoClassA");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut1");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut2");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut3");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawMan");
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut1", [=]() { return (hww.lep_relIso03EA()>0.2)                                      ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut2", [=]() { return (hww.lep_miniIsoEA()<0.02)                                      ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut3", [=]() { return (hww.recohiggs_max()<200.)                                      ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawMan"    , [=]() { return (hww.recowhad_puppi_mass()>60)*(hww.recowhad_puppi_mass()<105)  ; }, UNITY);
 
         // CutMuMinusRecoClassB
         cutflow.getCut("CutISR"+ISRbin+"MuMinusRecoClassB");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut1");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut2");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut3");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut4");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut5");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut6");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawMan");
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut1", [=]() { return (hww.recolepton_recowhad_dr()<0.75)                                             ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut2", [=]() { return (hww.recowhad_puppi_mass()<130)                                                 ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut3", [=]() { return (hww.lep_customrelIso005EA()<1.12)                                              ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut4", [=]() { return (hww.recowhad_plep_puppi_mass()<154.)                                           ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut5", [=]() { return (hww.recohiggs_min()<200.)                                                      ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut6", [=]() { return ((hww.recoisrmegajet_pt() / (hww.recowhad_puppi_pt() + hww.met_pt()) - 1)<0.2)  ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawMan"    , [=]() { return ((hww.recowhad_mlep_puppi_mass()>70)*(hww.recowhad_mlep_puppi_mass()<100))      ; }, UNITY);
 
         // CutMuPlusRecoClassB
         cutflow.getCut("CutISR"+ISRbin+"MuPlusRecoClassB");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut1");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut2");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut3");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut4");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut5");
-        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawMan");
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut1", [=]() { return (hww.recolepton_recowhad_dr()<0.75)                                         ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut2", [=]() { return (hww.recowhad_puppi_mass()<125)                                             ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut3", [=]() { return (hww.lep_customrelIso010EA()<1.28)                                          ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut4", [=]() { return (hww.recowhad_plep_puppi_mass()<141.)                                       ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut5", [=]() { return (hww.recohiggs_min()<200.)                                                  ; }, UNITY);
+        cutflow.addCutToLastActiveCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawMan"    , [=]() { return ((hww.recowhad_mlep_puppi_mass()>75)*(hww.recowhad_mlep_puppi_mass()<105))  ; }, UNITY);
     }
 
     // Book cutflows
@@ -106,7 +104,29 @@ int main(int argc, char** argv)
 
     // Histogram utility object that is used to define the histograms
     RooUtil::Histograms histograms;
-    histograms.addHistogram("yield", 8, 0, 8);
+    histograms.addHistogram("lep_relIso03EA"           , 180 , 0    , 4   , [=](){ return hww.lep_relIso03EA()                                                   ;} );
+    histograms.addHistogram("lep_miniIsoEA"            , 180 , 0    , 4   , [=](){ return hww.lep_miniIsoEA()                                                    ;} );
+    histograms.addHistogram("recowhad_puppi_mass"      , 180 , 0    , 300 , [=](){ return hww.recowhad_puppi_mass()                                              ;} );
+    histograms.addHistogram("recohiggs_min"            , 180 , 0    , 500 , [=](){ return hww.recohiggs_min()                                                    ;} );
+    histograms.addHistogram("recohiggs_max"            , 180 , 0    , 500 , [=](){ return hww.recohiggs_max()                                                    ;} );
+    histograms.addHistogram("recolepton_recowhad_dr"   , 180 , 0    , 4   , [=](){ return hww.recolepton_recowhad_dr()                                           ;} );
+    histograms.addHistogram("recoisrbalance"           , 180 , -1.5 , 1.5 , [=](){ return hww.recoisrmegajet_pt() / (hww.recowhad_puppi_pt() + hww.met_pt()) - 1 ;} );
+    histograms.addHistogram("recowhad_mlep_puppi_mass" , 180 , 0    , 300 , [=](){ return hww.recowhad_mlep_puppi_mass()                                         ;} );
+    histograms.addHistogram("recowhad_plep_puppi_mass" , 180 , 0    , 300 , [=](){ return hww.recowhad_plep_puppi_mass()                                         ;} );
+    histograms.addHistogram("lep_customrelIso005EA"    , 180 , 0    , 10  , [=](){ return hww.lep_customrelIso005EA()                                            ;} );
+    histograms.addHistogram("lep_customrelIso010EA"    , 180 , 0    , 10  , [=](){ return hww.lep_customrelIso010EA()                                            ;} );
+    histograms.addHistogram("yield"                    , 8   , 0    , 8   , [=](){
+                                                                                    int yield = -1;
+                                                                                    if (hww.CutElMinus()&& (hww.wlepwhadptratiodiff() > 0.)) yield = 0;
+                                                                                    if (hww.CutElPlus() && (hww.wlepwhadptratiodiff() > 0.)) yield = 1;
+                                                                                    if (hww.CutElMinus()&& (hww.wlepwhadptratiodiff() < 0.)) yield = 2;
+                                                                                    if (hww.CutElPlus() && (hww.wlepwhadptratiodiff() < 0.)) yield = 3;
+                                                                                    if (hww.CutMuMinus()&& (hww.wlepwhadptratiodiff() > 0.)) yield = 4;
+                                                                                    if (hww.CutMuPlus() && (hww.wlepwhadptratiodiff() > 0.)) yield = 5;
+                                                                                    if (hww.CutMuMinus()&& (hww.wlepwhadptratiodiff() < 0.)) yield = 6;
+                                                                                    if (hww.CutMuPlus() && (hww.wlepwhadptratiodiff() < 0.)) yield = 7;
+                                                                                    return yield;
+                                                                                });
 
     // Book Histograms
     for (auto& ISRbin : ISRbins)
@@ -127,71 +147,6 @@ int main(int argc, char** argv)
     // Looping input file
     while (looper.nextEvent())
     {
-        cutflow.setCut("CutWeight"      , hww.CutGenHT() > 0                                                , hww.wgt());
-        cutflow.setCut("CutBVeto"       , hww.nbmed() == 0                                                  , 1);
-        cutflow.setCut("CutNLep"        , hww.CutNLep() > 0                                                 , 1);
-        cutflow.setCut("CutNAK8"        , hww.nak8jets() > 0                                                , 1);
-        cutflow.setCut("CutISR400"      , hww.recoisrmegajet_pt() > 400.                                    , 1);
-        cutflow.setCut("CutISR400to450" , hww.recoisrmegajet_pt() > 400. && hww.recoisrmegajet_pt() <= 450. , 1);
-        cutflow.setCut("CutISR450"      , hww.recoisrmegajet_pt() > 450.                                    , 1);
-
-        // Nested for loop to save lines of code
-        for (auto& ISRbin : ISRbins)
-        {
-            for (auto& lepton : LeptonChannels)
-            {
-                bool flavor = lepton.EqualTo("El") ? hww.CutEl() : hww.CutMu();
-                cutflow.setCut("CutISR"+ISRbin+lepton, flavor, 1);
-                for (auto& charge : Charges)
-                {
-                    bool sign = charge.EqualTo("Plus") ?
-                        lepton.EqualTo("El") ? hww.CutElPlus() : hww.CutMuPlus()
-                        :
-                        lepton.EqualTo("El") ? hww.CutElMinus() : hww.CutMuMinus()
-                        ;
-                    cutflow.setCut("CutISR"+ISRbin+lepton+charge, sign, 1);
-                    cutflow.setCut("CutISR"+ISRbin+lepton+charge+"RecoClassA", sign && (hww.wlepwhadptratiodiff()>0.), 1);
-                    cutflow.setCut("CutISR"+ISRbin+lepton+charge+"RecoClassB", sign && (hww.wlepwhadptratiodiff()<0.), 1);
-                }
-            }
-        }
-
-        for (auto& ISRbin : ISRbins)
-        {
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawManCut1" , (hww.lep_relIso03EA()>0.2)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawManCut2" , (hww.lep_miniIsoEA()<0.02)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassAStrawMan"     , (hww.recowhad_puppi_mass()>60)*(hww.recowhad_puppi_mass()<105)                 , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut1"  , (hww.lep_relIso03EA()>0.2)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut2"  , (hww.lep_miniIsoEA()<0.02)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawManCut3"  , (hww.recohiggs_max()<200.)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassAStrawMan"      , (hww.recowhad_puppi_mass()>60)*(hww.recowhad_puppi_mass()<105)                 , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut1" , (hww.recolepton_recowhad_dr()<0.75)                                            , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut2" , (hww.recowhad_puppi_mass()<130)                                                , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut3" , (hww.lep_customrelIso005EA()<1.12)                                             , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut4" , (hww.recowhad_plep_puppi_mass()<154.)                                          , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut5" , (hww.recohiggs_min()<200.)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawManCut6" , ((hww.recoisrmegajet_pt() / (hww.recowhad_puppi_pt() + hww.met_pt()) - 1)<0.2) , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuMinusRecoClassBStrawMan"     , ((hww.recowhad_mlep_puppi_mass()>70)*(hww.recowhad_mlep_puppi_mass()<100))     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut1"  , (hww.recolepton_recowhad_dr()<0.75)                                            , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut2"  , (hww.recowhad_puppi_mass()<125)                                                , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut3"  , (hww.lep_customrelIso010EA()<1.28)                                             , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut4"  , (hww.recowhad_plep_puppi_mass()<141.)                                          , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawManCut5"  , (hww.recohiggs_min()<200.)                                                     , 1);
-            cutflow.setCut("CutISR"+ISRbin+"MuPlusRecoClassBStrawMan"      , ((hww.recowhad_mlep_puppi_mass()>75)*(hww.recowhad_mlep_puppi_mass()<105))     , 1);
-        }
-
-        int yield = -1;
-        if (hww.CutElMinus()&& (hww.wlepwhadptratiodiff() > 0.)) yield = 0;
-        if (hww.CutElPlus() && (hww.wlepwhadptratiodiff() > 0.)) yield = 1;
-        if (hww.CutElMinus()&& (hww.wlepwhadptratiodiff() < 0.)) yield = 2;
-        if (hww.CutElPlus() && (hww.wlepwhadptratiodiff() < 0.)) yield = 3;
-        if (hww.CutMuMinus()&& (hww.wlepwhadptratiodiff() > 0.)) yield = 4;
-        if (hww.CutMuPlus() && (hww.wlepwhadptratiodiff() > 0.)) yield = 5;
-        if (hww.CutMuMinus()&& (hww.wlepwhadptratiodiff() < 0.)) yield = 6;
-        if (hww.CutMuPlus() && (hww.wlepwhadptratiodiff() < 0.)) yield = 7;
-
-        cutflow.setVariable("yield", yield);
-
         cutflow.fill();
     }
 
